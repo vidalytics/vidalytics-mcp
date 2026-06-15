@@ -3,7 +3,7 @@
   "version": "0.1.1",
   "description": "One-command setup for Vidalytics AI video analytics tools in Claude, Windsurf, Cursor and more",
   "bin": {
-    "mcp": "./bin/vidalytics-mcp.js"
+    "mcp": "bin/vidalytics-mcp.js"
   },
   "publishConfig": {
     "access": "public"
@@ -31,7 +31,7 @@
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "https://github.com/vidalytics/vidalytics-mcp.git"
+    "url": "git+https://github.com/vidalytics/vidalytics-mcp.git"
   },
   "homepage": "https://github.com/vidalytics/vidalytics-mcp#readme",
   "dependencies": {}
