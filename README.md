@@ -1,5 +1,9 @@
 # @vidalytics/mcp
 
+[![npm version](https://img.shields.io/npm/v/@vidalytics/mcp)](https://www.npmjs.com/package/@vidalytics/mcp)
+[![CI](https://github.com/vidalytics/vidalytics-mcp/actions/workflows/ci.yml/badge.svg)](https://github.com/vidalytics/vidalytics-mcp/actions/workflows/ci.yml)
+[![license](https://img.shields.io/npm/l/@vidalytics/mcp)](LICENSE)
+
 One-command setup that connects your AI coding assistant to Vidalytics video analytics data via the [Model Context Protocol](https://modelcontextprotocol.io).
 
 Works with Claude (CLI & Desktop), Windsurf, Cursor, and any other MCP-compatible client.
