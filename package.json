@@ -5,6 +5,9 @@
   "bin": {
     "mcp": "./bin/vidalytics-mcp.js"
   },
+  "publishConfig": {
+    "access": "public"
+  },
   "files": [
     "bin",
     "lib",
