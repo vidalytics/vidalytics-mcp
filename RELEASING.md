@@ -7,19 +7,21 @@ Authentication uses npm **Trusted Publishing** (OIDC) — there is **no npm toke
 secret, or one-time password** involved. Each release is published with
 [provenance](https://docs.npmjs.com/generating-provenance-statements).
 
-## One-time setup (already done)
+## Prerequisites
 
-- The package is configured with a **Trusted Publisher** on npmjs.com:
-  `@vidalytics/mcp` → org `vidalytics` → repo `vidalytics-mcp` → workflow `publish.yml`.
-- The repository is **public** (required for provenance).
-- No `NPM_TOKEN` secret is needed.
+Publishing is authenticated via Trusted Publishing (OIDC), configured as:
+
+- A **Trusted Publisher** on npmjs.com for `@vidalytics/mcp`: org `vidalytics` →
+  repo `vidalytics-mcp` → workflow `publish.yml`.
+- The repository must be **public** (required for provenance).
+- No `NPM_TOKEN` secret is used.
 
 ## Cutting a release
 
 `main` is protected, so the version bump goes through a PR and the tag is pushed
 to the merged commit.
 
-1. **Bump the version on a branch** (`patch` | `minor` | `major`):
+1. **Bump the version on a branch** (pick the next `patch`/`minor`/`major` — `0.1.2` below is just an example):
 
    ```bash
    git checkout main && git pull
