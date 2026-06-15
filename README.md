@@ -1,4 +1,4 @@
-# vidalytics-mcp
+# @vidalytics/mcp
 
 One-command setup that connects your AI coding assistant to Vidalytics video analytics data via the [Model Context Protocol](https://modelcontextprotocol.io).
 
@@ -7,7 +7,7 @@ Works with Claude (CLI & Desktop), Windsurf, Cursor, and any other MCP-compatibl
 ## Setup
 
 ```bash
-npx vidalytics-mcp install
+npx @vidalytics/mcp install
 ```
 
 That's it. The installer detects which AI clients you have installed and configures each one automatically. Restart the client — a browser window will open for OAuth authorization on first use.
@@ -39,10 +39,10 @@ Once connected, your AI assistant gains access to:
 ## Options
 
 ```
-npx vidalytics-mcp install --all                    Configure all known clients, even if not detected
-npx vidalytics-mcp install --config /path/to/mcp.json   Also configure a custom config file
-npx vidalytics-mcp install --force                  Re-apply even if already configured
-npx vidalytics-mcp install --yes                    Skip confirmation prompt
+npx @vidalytics/mcp install --all                    Configure all known clients, even if not detected
+npx @vidalytics/mcp install --config /path/to/mcp.json   Also configure a custom config file
+npx @vidalytics/mcp install --force                  Re-apply even if already configured
+npx @vidalytics/mcp install --yes                    Skip confirmation prompt
 ```
 
 The `--config` flag can be repeated for multiple files. The target file must follow the `{ "mcpServers": {} }` format used by Claude Desktop, Cursor, and Windsurf — useful for unsupported clients like Zed or VS Code with an MCP plugin.

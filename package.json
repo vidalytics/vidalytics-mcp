@@ -1,9 +1,9 @@
 {
-  "name": "vidalytics-mcp",
+  "name": "@vidalytics/mcp",
   "version": "0.1.0",
   "description": "One-command setup for Vidalytics AI video analytics tools in Claude, Windsurf, Cursor and more",
   "bin": {
-    "vidalytics-mcp": "./bin/vidalytics-mcp.js"
+    "mcp": "./bin/vidalytics-mcp.js"
   },
   "files": [
     "bin",
