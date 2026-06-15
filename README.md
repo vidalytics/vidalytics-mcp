@@ -18,7 +18,7 @@ That's it. The installer detects which AI clients you have installed and configu
 
 ## What it does
 
-- Detects installed MCP clients (Claude CLI, Claude Desktop, Windsurf, Cursor) by checking config files, app directories, binaries in `$PATH`, and app bundles in `/Applications`
+- Detects installed MCP clients (Claude CLI, Claude Desktop, Windsurf, Cursor) by checking config files, app directories, binaries in `$PATH`, and app bundles (e.g. `/Applications` on macOS)
 - Adds Vidalytics as an MCP server in each detected client's config
 - Shows a preview of changes and asks for confirmation before writing anything
 
@@ -43,13 +43,26 @@ Once connected, your AI assistant gains access to:
 ## Options
 
 ```
-npx @vidalytics/mcp install --all                    Configure all known clients, even if not detected
-npx @vidalytics/mcp install --config /path/to/mcp.json   Also configure a custom config file
-npx @vidalytics/mcp install --force                  Re-apply even if already configured
-npx @vidalytics/mcp install --yes                    Skip confirmation prompt
+npx @vidalytics/mcp install [flags]
+
+  --all              Configure all known clients, even if not detected
+  --config <path>    Also configure a custom config file (repeatable)
+  --force            Re-apply even if already configured
+  --yes              Skip confirmation prompt
 ```
 
 The `--config` flag can be repeated for multiple files. The target file must follow the `{ "mcpServers": {} }` format used by Claude Desktop, Cursor, and Windsurf — useful for unsupported clients like Zed or VS Code with an MCP plugin.
+
+## Troubleshooting
+
+**Authorization issues, or need to re-authenticate?** Reset the credentials that
+`mcp-remote` caches in your home directory, then restart the client:
+
+| OS | Command |
+|----|---------|
+| macOS / Linux | `rm -rf ~/.mcp-auth` |
+| Windows (CMD) | `rd /s /q "%USERPROFILE%\.mcp-auth"` |
+| Windows (PowerShell) | `Remove-Item -Recurse -Force "$HOME\.mcp-auth"` |
 
 ## Requirements
 
