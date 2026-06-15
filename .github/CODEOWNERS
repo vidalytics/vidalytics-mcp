@@ -1,0 +1,7 @@
+# Code owners are automatically requested for review on every pull request.
+# Combine with a branch protection rule / ruleset on `main` that requires
+# review from Code Owners to prevent unreviewed changes from being merged.
+#
+# Swap or add a team (e.g. @vidalytics/backend) here if ownership moves.
+
+* @denis-kasatkin
