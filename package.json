@@ -1,0 +1,35 @@
+{
+  "name": "vidalytics-mcp",
+  "version": "0.1.0",
+  "description": "One-command setup for Vidalytics AI video analytics tools in Claude, Windsurf, Cursor and more",
+  "bin": {
+    "vidalytics-mcp": "./bin/vidalytics-mcp.js"
+  },
+  "files": [
+    "bin",
+    "lib",
+    "LICENSE"
+  ],
+  "scripts": {
+    "test": "node --test"
+  },
+  "engines": {
+    "node": ">=18"
+  },
+  "keywords": [
+    "vidalytics",
+    "mcp",
+    "model-context-protocol",
+    "claude",
+    "ai",
+    "video-analytics"
+  ],
+  "author": "Vidalytics",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/vidalytics/vidalytics-mcp.git"
+  },
+  "homepage": "https://github.com/vidalytics/vidalytics-mcp#readme",
+  "dependencies": {}
+}
