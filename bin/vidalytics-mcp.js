@@ -12,10 +12,10 @@ if (command === 'install') {
   }
 } else {
   console.log('Usage:');
-  console.log('  npx vidalytics-mcp install                     configure detected MCP clients');
-  console.log('  npx vidalytics-mcp install --all               configure all known clients');
-  console.log('  npx vidalytics-mcp install --config <path>     also configure a custom config file');
-  console.log('  npx vidalytics-mcp install --force             re-apply even if already configured');
-  console.log('  npx vidalytics-mcp install --yes               skip confirmation prompt');
+  console.log('  npx @vidalytics/mcp install                     configure detected MCP clients');
+  console.log('  npx @vidalytics/mcp install --all               configure all known clients');
+  console.log('  npx @vidalytics/mcp install --config <path>     also configure a custom config file');
+  console.log('  npx @vidalytics/mcp install --force             re-apply even if already configured');
+  console.log('  npx @vidalytics/mcp install --yes               skip confirmation prompt');
   process.exit(command ? 1 : 0);
 }
