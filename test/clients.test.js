@@ -8,7 +8,7 @@ const path = require('path');
 
 const {
   preview, applyChanges, makeClaudeEntry, makeCursorEntry, makeWindsurfEntry,
-  readCfg, getAction, resolveUrl,
+  readCfg, getAction, resolveUrl, CLIENTS,
 } = require('../lib/clients');
 
 // Fresh temp directory per call — tests never touch the real $HOME configs.
@@ -161,4 +161,20 @@ test('preview on a custom path: install / no-change / error', () => {
   res = preview({ customPaths: [broken] }).find(r => r.custom);
   assert.equal(res.action, 'error');
   assert.ok(res.error);
+});
+
+test('--config custom path matching a known client uses that client entry format', () => {
+  const url = resolveUrl();
+
+  // Each known client's canonical path should yield its own entry format.
+  for (const client of CLIENTS) {
+    const cfgPath = client.configPath[process.platform] || client.configPath.linux;
+    const res = preview({ customPaths: [cfgPath] }).find(r => r.custom);
+    assert.deepEqual(res.entry, client.makeEntry(url), `${client.name}: entry format mismatch`);
+  }
+
+  // An unrecognised path falls back to Claude HTTP format.
+  const unknown = path.join(os.tmpdir(), 'some-other-tool.json');
+  const res2 = preview({ customPaths: [unknown] }).find(r => r.custom);
+  assert.deepEqual(res2.entry, makeClaudeEntry(url), 'unknown path: should fall back to Claude entry');
 });
