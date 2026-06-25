@@ -28,17 +28,30 @@ Once connected, your AI assistant gains access to:
 
 | Tool | Description |
 |------|-------------|
+| `set_user_context` | MUST be called before any other tool to enable analytics |
 | `list_videos` | List videos with pagination |
 | `get_video` | Get video details |
+| `get_video_by_embed_guid` | Find a video by its embed GUID |
+| `update_video` | Update a video's title or folder |
+| `get_video_embed` | Get the embed code and configuration |
+| `get_video_settings` | Get playback settings (autoplay, controls, etc) |
+| `get_video_thumbnail` | Get the thumbnail image URL |
 | `get_video_stats` | Views, play rate, watch time, conversions |
 | `get_video_dropoff` | Audience retention by percentage |
 | `get_video_percentage_watched` | % of viewers who reached each point |
+| `get_video_live_metrics` | Real-time active viewers and watch rate |
+| `get_video_ctas` | Get CTAs for a video |
+| `get_video_pause_screens` | Get pause screens for a video |
 | `get_videos_stats_batch` | Stats for up to 30 videos at once |
 | `get_videos_timeline` | Timeline stats for up to 5 videos |
 | `list_folders` | List video folders |
 | `list_settings_templates` | List settings templates |
-| `get_video_ctas` | Get CTAs for a video |
-| `get_video_pause_screens` | Get pause screens for a video |
+| `get_api_usage` | Get current API usage and quota |
+| `list_connections` | List apps connected to your account |
+| `revoke_connection` | Disconnect an app or yourself |
+| `upload_video_from_url` | Upload a video from a remote URL |
+| `get_video_upload_url` | Get a signed URL for local file upload |
+| `validate_upload` | Complete a direct video upload |
 
 ## Options
 
