@@ -7,7 +7,7 @@ const os = require('os');
 const path = require('path');
 
 const {
-  preview, applyChanges, makeClaudeEntry, makeCursorEntry, makeWindsurfEntry,
+  preview, applyChanges, makeClaudeCliEntry, makeClaudeDesktopEntry, makeCursorEntry, makeWindsurfEntry,
   readCfg, getAction, resolveUrl, CLIENTS,
 } = require('../lib/clients');
 
@@ -19,12 +19,12 @@ function tmpDir() {
 // Build an actionable item that applyChanges() will process, pointed at a temp file.
 // Uses Claude HTTP format as the default entry (same as custom-path installs).
 function item(cfgPath, action = 'install') {
-  return { name: path.basename(cfgPath), cfgPath, action, custom: true, entry: makeClaudeEntry(resolveUrl()) };
+  return { name: path.basename(cfgPath), cfgPath, action, custom: true, entry: makeClaudeCliEntry(resolveUrl()) };
 }
 
 test('getAction: install / no-change / update / force', () => {
   const url = resolveUrl();
-  const entry = makeClaudeEntry(url);
+  const entry = makeClaudeCliEntry(url);
   assert.equal(getAction(null, entry, false), 'install');
   assert.equal(getAction(entry, entry, false), 'no-change');
   assert.equal(getAction({ command: 'other' }, entry, false), 'update');
@@ -32,9 +32,10 @@ test('getAction: install / no-change / update / force', () => {
   assert.equal(getAction(entry, entry, true), 'update');
 });
 
-test('entry formats: Claude uses type+url, Cursor uses url only, Windsurf uses serverUrl', () => {
+test('entry formats: CLI uses type+url, Desktop uses mcp-remote, Cursor uses url only, Windsurf uses serverUrl', () => {
   const url = 'https://example.test/mcp';
-  assert.deepEqual(makeClaudeEntry(url), { type: 'http', url });
+  assert.deepEqual(makeClaudeCliEntry(url), { type: 'http', url });
+  assert.deepEqual(makeClaudeDesktopEntry(url), { command: 'npx', args: ['-y', 'mcp-remote@latest', url] });
   assert.deepEqual(makeCursorEntry(url), { url });
   assert.deepEqual(makeWindsurfEntry(url), { serverUrl: url });
 });
@@ -79,7 +80,7 @@ test('applyChanges merges into an existing config without dropping other keys', 
   const after = JSON.parse(fs.readFileSync(cfgPath, 'utf8'));
   assert.equal(after.otherTopLevel, 42, 'unrelated top-level key preserved');
   assert.deepEqual(after.mcpServers.foo, { command: 'foo-cmd' }, 'other server preserved');
-  assert.deepEqual(after.mcpServers.vidalytics, makeClaudeEntry(resolveUrl()), 'vidalytics added');
+  assert.deepEqual(after.mcpServers.vidalytics, makeClaudeCliEntry(resolveUrl()), 'vidalytics added');
 });
 
 test('applyChanges creates a fresh config when the file is missing', () => {
@@ -88,7 +89,7 @@ test('applyChanges creates a fresh config when the file is missing', () => {
   const result = applyChanges([item(cfgPath)]);
   assert.equal(result[0].ok, true);
   const after = JSON.parse(fs.readFileSync(cfgPath, 'utf8'));
-  assert.deepEqual(after.mcpServers.vidalytics, makeClaudeEntry(resolveUrl()));
+  assert.deepEqual(after.mcpServers.vidalytics, makeClaudeCliEntry(resolveUrl()));
 });
 
 test('H1 regression: a malformed existing config is NEVER overwritten', () => {
@@ -124,11 +125,13 @@ test('VIDALYTICS_MCP_URL overrides the server URL (https only)', () => {
   try {
     // default → production
     delete process.env.VIDALYTICS_MCP_URL;
-    assert.match(makeClaudeEntry(resolveUrl()).url, /api\.vidalytics\.com/);
+    assert.match(makeClaudeCliEntry(resolveUrl()).url, /api\.vidalytics\.com/);
+    assert.match(makeClaudeDesktopEntry(resolveUrl()).args.join(' '), /api\.vidalytics\.com/);
 
-    // valid https override is honored — all three entry formats carry the URL
+    // valid https override is honored — all entry formats carry the URL
     process.env.VIDALYTICS_MCP_URL = 'https://api.example.test/mcp';
-    assert.match(makeClaudeEntry(resolveUrl()).url, /api\.example\.test\/mcp/);
+    assert.match(makeClaudeCliEntry(resolveUrl()).url, /api\.example\.test\/mcp/);
+    assert.match(makeClaudeDesktopEntry(resolveUrl()).args.join(' '), /api\.example\.test\/mcp/);
     assert.match(makeCursorEntry(resolveUrl()).url, /api\.example\.test\/mcp/);
     assert.match(makeWindsurfEntry(resolveUrl()).serverUrl, /api\.example\.test\/mcp/);
 
@@ -151,7 +154,7 @@ test('preview on a custom path: install / no-change / error', () => {
 
   // already configured with Claude HTTP format → no-change
   const configured = path.join(dir, 'b.json');
-  fs.writeFileSync(configured, JSON.stringify({ mcpServers: { vidalytics: makeClaudeEntry(resolveUrl()) } }));
+  fs.writeFileSync(configured, JSON.stringify({ mcpServers: { vidalytics: makeClaudeCliEntry(resolveUrl()) } }));
   res = preview({ customPaths: [configured] }).find(r => r.custom);
   assert.equal(res.action, 'no-change');
 
@@ -176,5 +179,5 @@ test('--config custom path matching a known client uses that client entry format
   // An unrecognised path falls back to Claude HTTP format.
   const unknown = path.join(os.tmpdir(), 'some-other-tool.json');
   const res2 = preview({ customPaths: [unknown] }).find(r => r.custom);
-  assert.deepEqual(res2.entry, makeClaudeEntry(url), 'unknown path: should fall back to Claude entry');
+  assert.deepEqual(res2.entry, makeClaudeCliEntry(url), 'unknown path: should fall back to Claude entry');
 });
