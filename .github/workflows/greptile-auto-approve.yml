@@ -1,0 +1,180 @@
+# Auto-approve PRs once Greptile has reviewed them, unless a P0 finding is present.
+#
+# Policy (decided with the team):
+#   - Greptile re-reviews on every push. Findings carry a severity badge alt="P0|P1|P2|P3".
+#       * no findings, or only sub-P0 (P1/P2/P3)  -> auto-approve
+#       * any *current* P0 finding                -> withhold approval, and dismiss any prior
+#         approval by the auto-approve App so a newly-introduced P0 re-blocks.
+#   - P1/P2/P3 are non-blocking by policy.
+#
+# Greptile reports in TWO shapes and we must handle BOTH, or clean PRs never auto-approve:
+#   1. A pull_request_review (COMMENTED) that carries inline findings — fires pull_request_review.
+#   2. A single PR summary *issue comment* ("Confidence Score: N/5"). A clean PR (5/5, no inline
+#      findings) gets ONLY this comment and NO review event, so a review-only trigger would never
+#      auto-approve it. We therefore also trigger on issue_comment and read the summary, which:
+#        - lists any out-of-diff findings with severity badges (alt="P0".."P3"), and
+#        - ends with a footer "Last reviewed commit: .../commit/<sha>" that we use to bind the
+#          decision to the exact commit Greptile reviewed (vs current HEAD).
+#
+#   - We approve via the same GitHub App as auto-approve.yml so the approval counts toward branch
+#     protection (a default GITHUB_TOKEN approval would not).
+#
+# We trust the event body (severities, reviewed-commit footer) ONLY for events authored by Greptile,
+# and we identify Greptile by an EXACT login match — never a `startsWith` prefix, which a look-alike
+# account such as `greptile-apps2` could satisfy and use to spoof an approval. The gate filters at the
+# `if:` level and the script re-validates the author before reading the payload body.
+#
+# NOTE: pull_request_review / issue_comment workflows always run from the DEFAULT branch, so any
+# change to this file only takes effect once it is merged to master.
+
+name: Greptile auto-approve
+
+on:
+  pull_request_review:
+    types: [submitted]
+  issue_comment:
+    types: [created, edited]
+
+permissions:
+  contents: read
+  pull-requests: write
+
+jobs:
+  greptile-gate:
+    # React to Greptile's own review submission OR its PR summary comment, on non-draft PRs.
+    # Match the bot login EXACTLY (both `greptile-apps[bot]` and the bare `greptile-apps` form) so a
+    # look-alike login cannot trigger this job. Our App's approval posts under a different login, so
+    # it is filtered out here (no loop).
+    if: >-
+      (
+        github.event_name == 'pull_request_review' &&
+        github.event.pull_request.draft == false &&
+        (
+          github.event.review.user.login == 'greptile-apps[bot]' ||
+          github.event.review.user.login == 'greptile-apps'
+        )
+      ) || (
+        github.event_name == 'issue_comment' &&
+        github.event.issue.pull_request != null &&
+        (
+          github.event.comment.user.login == 'greptile-apps[bot]' ||
+          github.event.comment.user.login == 'greptile-apps'
+        )
+      )
+    runs-on: ubuntu-latest
+    steps:
+      - name: Generate installation token
+        id: app-token
+        uses: actions/create-github-app-token@v1
+        with:
+          app-id: ${{ secrets.AUTO_APPROVE_APP_ID }}
+          private-key: ${{ secrets.AUTO_APPROVE_APP_PRIVATE_KEY }}
+
+      - name: Evaluate Greptile findings, then approve or withhold
+        uses: actions/github-script@v7
+        env:
+          APP_SLUG: ${{ steps.app-token.outputs.app-slug }}
+        with:
+          github-token: ${{ steps.app-token.outputs.token }}
+          script: |
+            const owner = context.repo.owner
+            const repo = context.repo.repo
+            const MARKER = '<!-- greptile-auto-approve -->'
+            const GREPTILE = /^greptile-apps(\[bot\])?$/i
+            const SEVERITY = /alt=["'](P[0-9])/g
+
+            // Resolve the PR and the commit Greptile actually reviewed, from whichever event fired.
+            // A review carries commit_id directly; the summary comment carries it in a
+            // "Last reviewed commit: .../commit/<sha>" footer. The `if:` gate already restricts us to
+            // Greptile-authored events, but we re-check the author with the exact bot-login regex
+            // before trusting the payload body — defense in depth against a spoofed event.
+            let pull_number, reviewedCommit, summaryBody = ''
+            if (context.eventName === 'pull_request_review') {
+              if (!GREPTILE.test(context.payload.review.user?.login || '')) {
+                core.info('Review author is not Greptile — skipping.')
+                return
+              }
+              pull_number = context.payload.pull_request.number
+              reviewedCommit = context.payload.review.commit_id
+            } else {
+              if (!GREPTILE.test(context.payload.comment.user?.login || '')) {
+                core.info('Comment author is not Greptile — skipping.')
+                return
+              }
+              pull_number = context.payload.issue.number
+              summaryBody = context.payload.comment.body || ''
+              reviewedCommit = (summaryBody.match(/\/commit\/([0-9a-f]{7,40})/) || [])[1] || null
+            }
+
+            const { data: pr } = await github.rest.pulls.get({ owner, repo, pull_number })
+            if (pr.state !== 'open' || pr.draft) {
+              core.info('PR is not open or is a draft — skipping.')
+              return
+            }
+
+            // Only ever decide about the commit Greptile reviewed. If we can't tie the event to a
+            // commit, or HEAD has since moved, wait for a fresh Greptile review of the new HEAD.
+            if (!reviewedCommit) {
+              core.info('No reviewed-commit reference on this Greptile event — skipping.')
+              return
+            }
+            if (reviewedCommit !== pr.head.sha) {
+              core.info(`Greptile reviewed ${reviewedCommit.slice(0, 8)} but HEAD is ${pr.head.sha.slice(0, 8)} — waiting for a fresh review.`)
+              return
+            }
+
+            // Collect P0s from BOTH the current inline review comments AND the summary body
+            // (Greptile lists out-of-diff findings, with severity badges, inside the summary).
+            // GitHub nulls a review comment's `line` once its code changed (outdated) so it no
+            // longer blocks; the flat, fully-paginated list avoids any per-thread cap.
+            const comments = await github.paginate(github.rest.pulls.listReviewComments,
+              { owner, repo, pull_number, per_page: 100 })
+            const inlineSeverities = comments
+              .filter(c => c.line != null)
+              .filter(c => GREPTILE.test(c.user?.login || ''))
+              .map(c => (/alt=["'](P[0-9])/.exec(c.body || '') || [])[1])
+              .filter(Boolean)
+            const summarySeverities = [...summaryBody.matchAll(SEVERITY)].map(m => m[1])
+            const severities = [...inlineSeverities, ...summarySeverities]
+            const hasP0 = severities.includes('P0')
+            core.info(`Greptile current findings: ${severities.join(', ') || 'none'} | hasP0=${hasP0}`)
+
+            // Approvals made by the auto-approve App itself (this workflow AND auto-approve.yml both
+            // review as `${APP_LOGIN}`). We only ever touch the App's own approvals, never a human's.
+            const APP_LOGIN = `${process.env.APP_SLUG}[bot]`
+            const reviews = await github.paginate(github.rest.pulls.listReviews,
+              { owner, repo, pull_number, per_page: 100 })
+            const appApprovals = reviews.filter(r =>
+              r.state === 'APPROVED' && r.user?.login === APP_LOGIN)
+
+            if (hasP0) {
+              core.warning('P0 finding present — withholding approval.')
+              for (const r of appApprovals) {
+                await github.rest.pulls.dismissReview({ owner, repo, pull_number,
+                  review_id: r.id,
+                  message: 'Dismissed by Greptile auto-approve: a P0 finding is present on the current commit.' })
+                core.info(`Dismissed app approval #${r.id}.`)
+              }
+              return
+            }
+
+            if (appApprovals.length > 0) {
+              core.info('Already approved by the auto-approve App and no P0 present — nothing to do.')
+              return
+            }
+
+            // Re-verify HEAD has not moved since we read the threads, so the approval can never
+            // bind to a commit Greptile did not review.
+            const { data: fresh } = await github.rest.pulls.get({ owner, repo, pull_number })
+            if (fresh.head.sha !== reviewedCommit) {
+              core.info(`HEAD moved to ${fresh.head.sha.slice(0, 8)} since Greptile reviewed ${reviewedCommit.slice(0, 8)} — skipping approval.`)
+              return
+            }
+
+            const summary = severities.length
+              ? `Greptile finished reviewing with no P0 findings (${[...new Set(severities)].sort().join(', ')}).`
+              : 'Greptile finished reviewing with no findings.'
+            await github.rest.pulls.createReview({ owner, repo, pull_number,
+              event: 'APPROVE',
+              body: `${MARKER}\n✅ Auto-approved — ${summary}\n\nP1/P2/P3 findings are non-blocking by policy; a P0 would withhold this approval.` })
+            core.info('Approved.')
