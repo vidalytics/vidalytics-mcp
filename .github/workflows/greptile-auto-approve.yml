@@ -6,6 +6,9 @@
 #       * any *current* P0 finding                -> withhold approval, and dismiss any prior
 #         approval by the auto-approve App so a newly-introduced P0 re-blocks.
 #   - P1/P2/P3 are non-blocking by policy.
+#   - Approval is bound to the EXACT reviewed commit: we approve only once Greptile's summary for
+#     that commit exists, and an approval of an earlier push never counts as approving a new one
+#     (so branch protection requiring approval of the most recent push is always satisfied).
 #
 # Greptile reports in TWO shapes and we must handle BOTH, or clean PRs never auto-approve:
 #   1. A pull_request_review (COMMENTED) that carries inline findings — fires pull_request_review.
@@ -25,7 +28,7 @@
 # `if:` level and the script re-validates the author before reading the payload body.
 #
 # NOTE: pull_request_review / issue_comment workflows always run from the DEFAULT branch, so any
-# change to this file only takes effect once it is merged to master.
+# change to this file only takes effect once it is merged to the default branch.
 
 name: Greptile auto-approve
 
@@ -82,13 +85,12 @@ jobs:
             const MARKER = '<!-- greptile-auto-approve -->'
             const GREPTILE = /^greptile-apps(\[bot\])?$/i
             const SEVERITY = /alt=["'](P[0-9])/g
+            const COMMIT_RE = /\/commit\/([0-9a-f]{7,40})/
 
-            // Resolve the PR and the commit Greptile actually reviewed, from whichever event fired.
-            // A review carries commit_id directly; the summary comment carries it in a
-            // "Last reviewed commit: .../commit/<sha>" footer. The `if:` gate already restricts us to
-            // Greptile-authored events, but we re-check the author with the exact bot-login regex
-            // before trusting the payload body — defense in depth against a spoofed event.
-            let pull_number, reviewedCommit, summaryBody = ''
+            // Resolve the PR and the commit Greptile reviewed, from whichever event fired. The `if:`
+            // gate already restricts us to Greptile-authored events, but we re-check the author with
+            // the exact bot-login regex before trusting any payload — defense in depth.
+            let pull_number, reviewedCommit
             if (context.eventName === 'pull_request_review') {
               if (!GREPTILE.test(context.payload.review.user?.login || '')) {
                 core.info('Review author is not Greptile — skipping.')
@@ -102,8 +104,7 @@ jobs:
                 return
               }
               pull_number = context.payload.issue.number
-              summaryBody = context.payload.comment.body || ''
-              reviewedCommit = (summaryBody.match(/\/commit\/([0-9a-f]{7,40})/) || [])[1] || null
+              reviewedCommit = (context.payload.comment.body || '').match(COMMIT_RE)?.[1] || null
             }
 
             const { data: pr } = await github.rest.pulls.get({ owner, repo, pull_number })
@@ -123,8 +124,19 @@ jobs:
               return
             }
 
-            // Collect P0s from BOTH the current inline review comments AND the summary body
-            // (Greptile lists out-of-diff findings, with severity badges, inside the summary).
+            // Greptile lists out-of-diff findings (including P0s) ONLY in its PR summary issue-comment,
+            // never inline. Read that summary from the API — regardless of which event fired — so the
+            // pull_request_review path cannot approve while a summary-only P0 for this commit is still
+            // outstanding. Bind to the summary whose "Last reviewed commit" footer matches the commit
+            // we are deciding about; if none exists yet, we defer approval to the summary event below.
+            const issueComments = await github.paginate(github.rest.issues.listComments,
+              { owner, repo, issue_number: pull_number, per_page: 100 })
+            const greptileSummary = [...issueComments].reverse().find(c =>
+              GREPTILE.test(c.user?.login || '') && COMMIT_RE.test(c.body || ''))
+            const summaryCommit = greptileSummary ? (greptileSummary.body.match(COMMIT_RE) || [])[1] : null
+            const summaryBody = summaryCommit === reviewedCommit ? greptileSummary.body : ''
+
+            // Collect P0s from BOTH the current inline review comments AND the summary body.
             // GitHub nulls a review comment's `line` once its code changed (outdated) so it no
             // longer blocks; the flat, fully-paginated list avoids any per-thread cap.
             const comments = await github.paginate(github.rest.pulls.listReviewComments,
@@ -149,6 +161,7 @@ jobs:
 
             if (hasP0) {
               core.warning('P0 finding present — withholding approval.')
+              // Dismiss EVERY prior App approval (any commit) so a newly-introduced P0 re-blocks.
               for (const r of appApprovals) {
                 await github.rest.pulls.dismissReview({ owner, repo, pull_number,
                   review_id: r.id,
@@ -158,8 +171,18 @@ jobs:
               return
             }
 
-            if (appApprovals.length > 0) {
-              core.info('Already approved by the auto-approve App and no P0 present — nothing to do.')
+            // "Already approved" must be commit-specific: an approval of an earlier push does not
+            // satisfy branch protection that requires approval of the most recent reviewable push,
+            // so only skip when the App has already approved THIS exact commit.
+            if (appApprovals.some(r => r.commit_id === reviewedCommit)) {
+              core.info('Already approved by the auto-approve App for the current commit — nothing to do.')
+              return
+            }
+
+            // Do not approve until Greptile's summary for THIS commit exists — it carries the complete
+            // out-of-diff picture, so a summary-only P0 can never be approved past on a review event.
+            if (summaryCommit !== reviewedCommit) {
+              core.info('No Greptile summary for the current commit yet — deferring approval to the summary event.')
               return
             }
 
@@ -171,10 +194,10 @@ jobs:
               return
             }
 
-            const summary = severities.length
+            const findingsSummary = severities.length
               ? `Greptile finished reviewing with no P0 findings (${[...new Set(severities)].sort().join(', ')}).`
               : 'Greptile finished reviewing with no findings.'
             await github.rest.pulls.createReview({ owner, repo, pull_number,
               event: 'APPROVE',
-              body: `${MARKER}\n✅ Auto-approved — ${summary}\n\nP1/P2/P3 findings are non-blocking by policy; a P0 would withhold this approval.` })
+              body: `${MARKER}\n✅ Auto-approved — ${findingsSummary}\n\nP1/P2/P3 findings are non-blocking by policy; a P0 would withhold this approval.` })
             core.info('Approved.')
