@@ -52,6 +52,15 @@ Once connected, your AI assistant gains access to:
 | `upload_video_from_url` | Upload a video from a remote URL |
 | `get_video_upload_url` | Get a signed URL for local file upload |
 | `validate_upload` | Complete a direct video upload |
+| `publish_video` | Publish a video's pending draft settings |
+| `duplicate_video` | Duplicate a video and publish the copy |
+| `create_folder` | Create a video folder, optionally nested under another folder |
+| `apply_settings_template` | Apply a reusable player settings template to a video |
+| `create_video_cta` | Create a call-to-action on a video |
+| `update_video_cta` | Update an existing call-to-action on a video |
+| `set_video_thumbnail_from_url` | Set a video's thumbnail from a public image URL |
+| `set_video_thumbnail_from_frame` | Set a video's thumbnail from one of its frames |
+| `delete_video_thumbnail` | Remove a custom thumbnail and restore the default |
 
 ## Options
 
