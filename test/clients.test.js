@@ -191,6 +191,24 @@ test('preview: clientFilter restricts to named clients and configures them even 
   assert.equal(preview({ clientFilter: ['nope'] }).filter((r) => !r.custom).length, 0);
 });
 
+test('CLI: --client with a missing value is rejected and writes nothing', () => {
+  const { spawnSync } = require('child_process');
+  const bin = path.join(__dirname, '..', 'bin', 'vidalytics-mcp.js');
+  const home = tmpDir();
+
+  // `--client --yes`: the value is missing (next token is another flag). This must
+  // exit nonzero and NOT fall back to configuring every detected client.
+  const res = spawnSync(process.execPath, [bin, 'install', '--client', '--yes'], {
+    env: { ...process.env, HOME: home, USERPROFILE: home },
+    encoding: 'utf8',
+  });
+
+  assert.notEqual(res.status, 0, 'malformed --client must exit nonzero');
+  // No client config should have been written under the disposable HOME.
+  assert.equal(fs.existsSync(path.join(home, '.cursor', 'mcp.json')), false);
+  assert.equal(fs.existsSync(path.join(home, '.claude.json')), false);
+});
+
 test('verifyWritten: ok when the vidalytics entry is present, fails otherwise', () => {
   const dir = tmpDir();
 
