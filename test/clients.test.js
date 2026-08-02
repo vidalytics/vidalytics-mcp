@@ -8,7 +8,7 @@ const path = require('path');
 
 const {
   preview, applyChanges, makeClaudeCliEntry, makeClaudeDesktopEntry, makeCursorEntry, makeWindsurfEntry,
-  readCfg, getAction, resolveUrl, CLIENTS,
+  readCfg, getAction, resolveUrl, verifyWritten, verifyUrl, CLIENTS,
 } = require('../lib/clients');
 
 // Fresh temp directory per call — tests never touch the real $HOME configs.
@@ -164,6 +164,58 @@ test('preview on a custom path: install / no-change / error', () => {
   res = preview({ customPaths: [broken] }).find(r => r.custom);
   assert.equal(res.action, 'error');
   assert.ok(res.error);
+});
+
+test('preview: every client item carries a key and a detected flag', () => {
+  const items = preview({ includeAll: true }).filter((r) => !r.custom);
+  assert.equal(items.length, CLIENTS.length);
+  for (const it of items) {
+    assert.ok(CLIENTS.some((c) => c.key === it.key), `unexpected key: ${it.key}`);
+    assert.equal(typeof it.detected, 'boolean', `${it.name}: detected must be boolean`);
+  }
+});
+
+test('preview: clientFilter restricts to named clients and configures them even if undetected', () => {
+  const items = preview({ clientFilter: ['cursor'] });
+  const clientItems = items.filter((r) => !r.custom);
+
+  // Only the requested client is considered.
+  assert.equal(clientItems.length, 1);
+  assert.equal(clientItems[0].key, 'cursor');
+
+  // A filtered client is treated as explicitly requested, so it is never 'skipped'
+  // even when it is not installed on this machine.
+  assert.notEqual(clientItems[0].action, 'skipped');
+
+  // An empty / unmatched filter yields no client items.
+  assert.equal(preview({ clientFilter: ['nope'] }).filter((r) => !r.custom).length, 0);
+});
+
+test('verifyWritten: ok when the vidalytics entry is present, fails otherwise', () => {
+  const dir = tmpDir();
+
+  const good = path.join(dir, 'good.json');
+  fs.writeFileSync(good, JSON.stringify({ mcpServers: { vidalytics: makeClaudeCliEntry(resolveUrl()) } }));
+  assert.deepEqual(verifyWritten(good), { ok: true });
+
+  const noEntry = path.join(dir, 'no-entry.json');
+  fs.writeFileSync(noEntry, JSON.stringify({ mcpServers: { other: {} } }));
+  assert.equal(verifyWritten(noEntry).ok, false);
+
+  const broken = path.join(dir, 'broken.json');
+  fs.writeFileSync(broken, '{ not json');
+  assert.equal(verifyWritten(broken).ok, false);
+});
+
+test('verifyUrl: resolves ok:false for an unreachable host (no throw)', async () => {
+  // Port 1 refuses immediately — deterministic and offline-safe.
+  const refused = await verifyUrl('https://127.0.0.1:1/', { timeoutMs: 2000 });
+  assert.equal(refused.ok, false);
+  assert.ok(refused.error);
+
+  // A malformed URL is swallowed into ok:false rather than throwing.
+  const bad = await verifyUrl('not-a-valid-url', { timeoutMs: 2000 });
+  assert.equal(bad.ok, false);
 });
 
 test('--config custom path matching a known client uses that client entry format', () => {

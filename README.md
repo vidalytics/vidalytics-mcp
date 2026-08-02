@@ -14,13 +14,15 @@ Works with Claude (CLI & Desktop), Windsurf, Cursor, and any other MCP-compatibl
 npx @vidalytics/mcp install
 ```
 
-That's it. The installer detects which AI clients you have installed and configures each one automatically. Restart the client — a browser window will open for OAuth authorization on first use.
+That's it. The installer detects which AI clients you have installed, lets you **pick which ones to configure**, and wires them up. Restart the client — a browser window will open for OAuth authorization on first use.
 
 ## What it does
 
 - Detects installed MCP clients (Claude CLI, Claude Desktop, Windsurf, Cursor) by checking config files, app directories, binaries in `$PATH`, and app bundles (e.g. `/Applications` on macOS)
-- Adds Vidalytics as an MCP server in each detected client's config
-- Shows a preview of changes and asks for confirmation before writing anything
+- Presents an interactive checklist (detected clients pre-selected) so you configure exactly the ones you want — or pick them non-interactively with `--client`
+- Adds Vidalytics as an MCP server in each selected client's config
+- Verifies after writing: the config is valid and the MCP server is reachable
+- Non-interactive terminals (CI) and any explicit selection flag (`--client`, `--all`, `--yes`) skip the checklist and behave predictably
 
 ## Available tools
 
@@ -67,11 +69,15 @@ Once connected, your AI assistant gains access to:
 ```
 npx @vidalytics/mcp install [flags]
 
+  --client <names>   Configure only these clients, comma-separated
+                     (claude-cli, claude-desktop, windsurf, cursor)
   --all              Configure all known clients, even if not detected
   --config <path>    Also configure a custom config file (repeatable)
   --force            Re-apply even if already configured
-  --yes              Skip confirmation prompt
+  --yes              Skip prompts (configure detected clients)
 ```
+
+Run with no flags in an interactive terminal to get a checklist of clients to configure (detected ones are pre-selected; use space to toggle, enter to confirm). `--client cursor,windsurf` does the same selection non-interactively.
 
 The `--config` flag can be repeated for multiple files. The target file must follow the `{ "mcpServers": {} }` format used by Claude Desktop, Cursor, and Windsurf — useful for unsupported clients like Zed or VS Code with an MCP plugin.
 
