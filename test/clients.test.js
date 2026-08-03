@@ -209,6 +209,23 @@ test('CLI: --client with a missing value is rejected and writes nothing', () => 
   assert.equal(fs.existsSync(path.join(home, '.claude.json')), false);
 });
 
+test('CLI: empty equals-form --client= is rejected and writes nothing', () => {
+  const { spawnSync } = require('child_process');
+  const bin = path.join(__dirname, '..', 'bin', 'vidalytics-mcp.js');
+  const home = tmpDir();
+
+  // `--client= --yes`: the equals form with an empty value must not slip past the
+  // missing-value guard and fall back to configuring every detected client.
+  const res = spawnSync(process.execPath, [bin, 'install', '--client=', '--yes'], {
+    env: { ...process.env, HOME: home, USERPROFILE: home },
+    encoding: 'utf8',
+  });
+
+  assert.notEqual(res.status, 0, 'empty --client= must exit nonzero');
+  assert.equal(fs.existsSync(path.join(home, '.cursor', 'mcp.json')), false);
+  assert.equal(fs.existsSync(path.join(home, '.claude.json')), false);
+});
+
 test('verifyWritten: ok when the vidalytics entry is present, fails otherwise', () => {
   const dir = tmpDir();
 
