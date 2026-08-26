@@ -18,7 +18,7 @@ That's it. The installer detects which AI clients you have installed, lets you *
 
 ## Cursor
 
-[![Add Vidalytics to Cursor](https://cursor.com/deeplink/mcp-install-dark.svg)](https://cursor.com/en/install-mcp?name=Vidalytics&config=eyJ0eXBlIjoiaHR0cCIsInVybCI6Imh0dHBzOi8vYXBpLnZpZGFseXRpY3MuY29tL3B1YmxpYy92MS9tY3AifQ%3D%3D)
+[![Add Vidalytics to Cursor](https://cursor.com/deeplink/mcp-install-dark.svg)](https://cursor.com/en/install-mcp?name=vidalytics&config=eyJ0eXBlIjoiaHR0cCIsInVybCI6Imh0dHBzOi8vYXBpLnZpZGFseXRpY3MuY29tL3B1YmxpYy92MS9tY3AifQ%3D%3D)
 
 **Or via the installer:**
 
@@ -31,7 +31,7 @@ npx @vidalytics/mcp install --client cursor
 ```json
 {
   "mcpServers": {
-    "Vidalytics": {
+    "vidalytics": {
       "url": "https://api.vidalytics.com/public/v1/mcp"
     }
   }
