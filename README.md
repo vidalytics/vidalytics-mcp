@@ -116,6 +116,16 @@ The `--config` flag can be repeated for multiple files. The target file must fol
 | Windows (CMD) | `rd /s /q "%USERPROFILE%\.mcp-auth"` |
 | Windows (PowerShell) | `Remove-Item -Recurse -Force "$HOME\.mcp-auth"` |
 
+## MCP Registry
+
+This server is published to the official [MCP Registry](https://registry.modelcontextprotocol.io) as **`com.vidalytics/mcp`**. It is a remote (streamable-http) server, so registry-aware MCP clients can connect to it directly at:
+
+```
+https://api.vidalytics.com/public/v1/mcp
+```
+
+No API key or environment variables are required — authorization is handled via OAuth on first use.
+
 ## Requirements
 
 - Node.js 18+

@@ -1,0 +1,16 @@
+{
+  "$schema": "https://static.modelcontextprotocol.io/schemas/2025-12-11/server.schema.json",
+  "name": "com.vidalytics/mcp",
+  "description": "Manage your Vidalytics videos and analytics from your AI assistant.",
+  "repository": {
+    "url": "https://github.com/vidalytics/vidalytics-mcp",
+    "source": "github"
+  },
+  "version": "0.4.1",
+  "remotes": [
+    {
+      "type": "streamable-http",
+      "url": "https://api.vidalytics.com/public/v1/mcp"
+    }
+  ]
+}
