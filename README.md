@@ -18,7 +18,7 @@ That's it. The installer detects which AI clients you have installed, lets you *
 
 ## Cursor
 
-**One-click:** [Add Vidalytics to Cursor](cursor://anysphere.cursor-deeplink/mcp/install?name=Vidalytics&config=eyJ0eXBlIjoiaHR0cCIsInVybCI6Imh0dHBzOi8vYXBpLnZpZGFseXRpY3MuY29tL3B1YmxpYy92MS9tY3AifQ==)
+[![Add Vidalytics to Cursor](https://cursor.com/deeplink/mcp-install-dark.svg)](https://cursor.com/en/install-mcp?name=Vidalytics&config=eyJ0eXBlIjoiaHR0cCIsInVybCI6Imh0dHBzOi8vYXBpLnZpZGFseXRpY3MuY29tL3B1YmxpYy92MS9tY3AifQ%3D%3D)
 
 **Or via the installer:**
 
