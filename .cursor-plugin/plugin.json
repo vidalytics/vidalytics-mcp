@@ -1,0 +1,12 @@
+{
+  "name": "vidalytics",
+  "version": "0.4.0",
+  "description": "Manage your Vidalytics videos and analytics from your AI assistant.",
+  "author": {
+    "name": "Vidalytics"
+  },
+  "homepage": "https://help.vidalytics.com/vidalytics-mcp-manage-your-videos-by-talking-to-your-ai",
+  "repository": "https://github.com/vidalytics/vidalytics-mcp",
+  "license": "MIT",
+  "keywords": ["video", "analytics", "vidalytics", "video-marketing", "mcp"]
+}

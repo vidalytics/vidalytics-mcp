@@ -16,6 +16,30 @@ npx @vidalytics/mcp install
 
 That's it. The installer detects which AI clients you have installed, lets you **pick which ones to configure**, and wires them up. Restart the client — a browser window will open for OAuth authorization on first use.
 
+## Cursor
+
+[![Add Vidalytics to Cursor](https://cursor.com/deeplink/mcp-install-dark.svg)](https://cursor.com/en/install-mcp?name=vidalytics&config=eyJ0eXBlIjoiaHR0cCIsInVybCI6Imh0dHBzOi8vYXBpLnZpZGFseXRpY3MuY29tL3B1YmxpYy92MS9tY3AifQ%3D%3D)
+
+**Or via the installer:**
+
+```bash
+npx @vidalytics/mcp install --client cursor
+```
+
+**Or manually** — add this to `~/.cursor/mcp.json`:
+
+```json
+{
+  "mcpServers": {
+    "vidalytics": {
+      "url": "https://api.vidalytics.com/public/v1/mcp"
+    }
+  }
+}
+```
+
+Restart Cursor. On first use a browser window opens for OAuth authorization with your Vidalytics account — no API key or environment variables to set.
+
 ## What it does
 
 - Detects installed MCP clients (Claude CLI, Claude Desktop, Windsurf, Cursor) by checking config files, app directories, binaries in `$PATH`, and app bundles (e.g. `/Applications` on macOS)

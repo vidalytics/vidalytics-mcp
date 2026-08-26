@@ -1,0 +1,7 @@
+{
+  "mcpServers": {
+    "vidalytics": {
+      "url": "https://api.vidalytics.com/public/v1/mcp"
+    }
+  }
+}
