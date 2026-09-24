@@ -56,6 +56,13 @@ Many write tools (settings, chapters, captions, tags, CTAs, pause screens, thumb
 changes to the video's **draft** — call `publish_video` to make them live. Write tools require a
 read+write authorization; a read-only connection returns `SCOPE_INSUFFICIENT`.
 
+**Previewing changes.** `update_video_settings` accepts `dryRun` to validate and return a
+before/after diff without saving. The other draft-based writes have no `dryRun`; preview them by
+saving to the draft and reading it back with the matching `get_*`/`list_*` tool (e.g.
+`get_video_chapters`, `get_video_tags`, `get_video_captions`) before you `publish_video`. A delete
+that only removes an unpublished draft edit is likewise reversible until publish; a delete against
+already-published content takes effect on the next publish.
+
 **Videos & metadata**
 
 | Tool | Description |
