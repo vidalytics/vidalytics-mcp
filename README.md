@@ -50,7 +50,13 @@ Restart Cursor. On first use a browser window opens for OAuth authorization with
 
 ## Available tools
 
-Once connected, your AI assistant gains access to:
+Once connected, your AI assistant gains access to the tools below.
+
+Many write tools (settings, chapters, captions, tags, CTAs, pause screens, thumbnails) save
+changes to the video's **draft** — call `publish_video` to make them live. Write tools require a
+read+write authorization; a read-only connection returns `SCOPE_INSUFFICIENT`.
+
+**Videos & metadata**
 
 | Tool | Description |
 |------|-------------|
@@ -61,32 +67,83 @@ Once connected, your AI assistant gains access to:
 | `update_video` | Update a video's title or folder |
 | `get_video_embed` | Get the embed code and configuration |
 | `get_video_settings` | Get playback settings (autoplay, controls, etc) |
-| `get_video_thumbnail` | Get the thumbnail image URL |
+| `update_video_settings` | Update playback settings as a draft (`dryRun` validates and returns the diff only) |
+| `duplicate_video` | Duplicate a video and publish the copy |
+| `publish_video` | Publish a video's pending draft settings |
+
+**Analytics**
+
+| Tool | Description |
+|------|-------------|
 | `get_video_stats` | Views, play rate, watch time, conversions |
 | `get_video_dropoff` | Audience retention by percentage |
 | `get_video_percentage_watched` | % of viewers who reached each point |
 | `get_video_live_metrics` | Real-time active viewers and watch rate |
-| `get_video_ctas` | Get CTAs for a video |
-| `get_video_pause_screens` | Get pause screens for a video |
 | `get_videos_stats_batch` | Stats for up to 30 videos at once |
 | `get_videos_timeline` | Timeline stats for up to 5 videos |
-| `list_folders` | List video folders |
-| `list_settings_templates` | List settings templates |
-| `get_api_usage` | Get current API usage and quota |
-| `list_connections` | List apps connected to your account |
-| `revoke_connection` | Disconnect an app or yourself |
-| `upload_video_from_url` | Upload a video from a remote URL |
-| `get_video_upload_url` | Get a signed URL for local file upload |
-| `validate_upload` | Complete a direct video upload |
-| `publish_video` | Publish a video's pending draft settings |
-| `duplicate_video` | Duplicate a video and publish the copy |
-| `create_folder` | Create a video folder, optionally nested under another folder |
-| `apply_settings_template` | Apply a reusable player settings template to a video |
+
+**Chapters, captions & tags**
+
+| Tool | Description |
+|------|-------------|
+| `get_video_chapters` | List a video's chapters and whether they're enabled |
+| `set_video_chapters` | Replace a video's chapter markers (draft) |
+| `get_video_captions` | List a video's caption tracks |
+| `add_video_caption` | Add or replace a caption track from provided text (draft) |
+| `delete_video_caption` | Remove a caption language |
+| `get_video_tags` | List a video's tags and custom variables |
+| `set_video_tags` | Set a video's full tag list (draft) |
+
+**CTAs & pause screens**
+
+| Tool | Description |
+|------|-------------|
+| `get_video_ctas` | Get CTAs for a video |
 | `create_video_cta` | Create a call-to-action on a video |
 | `update_video_cta` | Update an existing call-to-action on a video |
+| `delete_video_cta` | Delete a call-to-action from a video |
+| `get_video_pause_screens` | Get pause screens for a video |
+| `create_video_pause_screen` | Add a pause screen to a video (draft) |
+| `update_video_pause_screen` | Update a pause screen on a video (draft) |
+| `delete_video_pause_screen` | Remove a pause screen from a video |
+
+**Thumbnails**
+
+| Tool | Description |
+|------|-------------|
+| `get_video_thumbnail` | Get the thumbnail image URL |
 | `set_video_thumbnail_from_url` | Set a video's thumbnail from a public image URL |
 | `set_video_thumbnail_from_frame` | Set a video's thumbnail from one of its frames |
 | `delete_video_thumbnail` | Remove a custom thumbnail and restore the default |
+
+**Folders & settings templates**
+
+| Tool | Description |
+|------|-------------|
+| `list_folders` | List video folders |
+| `create_folder` | Create a video folder, optionally nested under another folder |
+| `rename_folder` | Rename a video folder |
+| `list_settings_templates` | List settings templates |
+| `create_settings_template` | Create a settings template from a video's current settings |
+| `update_settings_template` | Update a settings template (rename, re-describe, or re-snapshot from a video) |
+| `delete_settings_template` | Delete a settings template |
+| `apply_settings_template` | Apply a reusable player settings template to a video |
+
+**Uploads**
+
+| Tool | Description |
+|------|-------------|
+| `upload_video_from_url` | Upload a video from a remote URL |
+| `get_video_upload_url` | Get a signed URL for local file upload |
+| `validate_upload` | Complete a direct video upload |
+
+**Account**
+
+| Tool | Description |
+|------|-------------|
+| `get_api_usage` | Get current API usage and quota |
+| `list_connections` | List apps connected to your account |
+| `revoke_connection` | Disconnect an app or yourself |
 
 ## Options
 
